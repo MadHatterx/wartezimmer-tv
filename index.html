@@ -6,251 +6,444 @@
 <title>Wartezimmer-TV</title>
 <!--
   Wartezimmer-TV – Völker Finance
-  Inhalte kommen aus der Google-Tabelle (SHEET_ID unten), werden alle 5 Minuten neu geladen.
-  Bewusst ES5 + einfaches CSS, damit es auch auf alten Fire-TV-Sticks (Fire OS 5) läuft.
+  Inhalte: Google-Tabelle (SHEET_ID), alle 5 Minuten neu eingelesen; DEFAULTS unten greifen, solange die Tabelle nicht erreichbar ist.
+  Gestaltet auf einer festen 1920×1080-Bühne, die auf jede Bildschirmgröße skaliert wird.
+  Bewusst ES5 + Flexbox (kein Grid, keine CSS-Variablen), damit es auf Fire OS 5 läuft.
 -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;overflow:hidden;background:#0b1d33;color:#fff;
-  font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;cursor:none}
-header{position:fixed;top:0;left:0;right:0;height:9vh;padding:0 4vw;font-size:2.4vh;color:#a9bdd6;
-  display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
-  -webkit-justify-content:space-between;justify-content:space-between}
-.brand{font-weight:700;color:#fff;font-size:3vh;letter-spacing:.05em}
-.brand span{color:#4fc3d9}
-#wx,#date{margin-right:3vw}
-#clock{font-size:3.4vh;color:#fff;font-weight:600}
-.slide{position:absolute;top:9vh;bottom:11vh;left:4vw;right:4vw;opacity:0;-webkit-transition:opacity 1s;transition:opacity 1s;
-  display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
-.slide.on{opacity:1}
-.text{-webkit-flex:1;flex:1}
-.side{margin-left:5vw}
-.kicker{color:#4fc3d9;font-size:2.6vh;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin-bottom:2vh}
-h1{font-size:7.5vh;line-height:1.1;font-weight:800;margin-bottom:3vh}
-h1 em{font-style:normal;color:#f2b84b}
-.lead{font-size:3.4vh;line-height:1.4;color:#a9bdd6;max-width:62vw}
-.list{list-style:none;margin-top:2vh;overflow:hidden}
-.list li{float:left;width:48%;margin:0 2% 2vh 0;font-size:2.9vh;padding:1.8vh 2vw;background:#163560;
-  border-radius:1.5vh;border-left:.6vh solid #4fc3d9}
-.list li small{display:block;color:#a9bdd6;font-size:2.1vh;margin-top:.5vh}
-.qrbox{background:#fff;padding:2.5vh;border-radius:2vh;text-align:center;color:#0b1d33}
-.qrbox img{width:34vh;height:34vh;display:block}
-.qrbox .cap{font-size:2.4vh;font-weight:700;margin-top:1.5vh}
-.icon{font-size:20vh;line-height:1;margin-right:5vw}
-.team{margin-top:3vh;overflow:hidden}
-.team .p{float:left;width:20%;text-align:center}
-.avatar{width:15vh;height:15vh;line-height:15vh;border-radius:50%;background:#163560;margin:0 auto 1.5vh;
-  font-size:5vh;font-weight:700;color:#4fc3d9;border:.4vh solid #4fc3d9}
-.team .n{font-size:2.6vh;font-weight:700}.team .r{font-size:2vh;color:#a9bdd6}
-.wxbig{font-size:8vh;font-weight:700}.wxbig small{display:block;font-size:2.6vh;color:#a9bdd6;font-weight:400}
-#progress{position:fixed;left:0;bottom:7vh;height:.5vh;background:#4fc3d9;width:0}
-footer{position:fixed;left:0;right:0;bottom:0;height:7vh;line-height:7vh;background:#07142a;overflow:hidden;font-size:2.6vh;white-space:nowrap}
-#ticker{position:absolute;left:0;top:0;white-space:nowrap}
-#ticker span{margin-right:6vw}
-#ticker span:before{content:"\25CF";color:#4fc3d9;margin-right:1.2vw}
+html,body{width:100%;height:100%;overflow:hidden;background:#04101f;cursor:none}
+body{font-family:"Manrope","Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+.row{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+
+/* Bühne 1920×1080 */
+#app{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;-webkit-transform-origin:0 0;transform-origin:0 0;
+  background:#071a33;
+  background-image:radial-gradient(circle at 88% 8%,rgba(94,200,229,.22),rgba(94,200,229,0) 38%),
+                   radial-gradient(circle at 6% 96%,rgba(240,181,74,.14),rgba(240,181,74,0) 34%),
+                   linear-gradient(135deg,#0d2f59 0%,#071a33 55%,#05132a 100%)}
+.ring{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.05)}
+
+/* Kopfzeile */
+#head{position:absolute;left:110px;right:110px;top:42px;height:96px;-webkit-justify-content:space-between;justify-content:space-between}
+#logo{height:84px;margin-right:26px}
+#mono{width:84px;height:84px;border-radius:24px;margin-right:26px;font-weight:800;font-size:36px;line-height:84px;text-align:center;letter-spacing:-1px;
+  background:linear-gradient(135deg,#5ec8e5,#2b7fd0);color:#fff;box-shadow:0 10px 30px rgba(43,127,208,.35)}
+.bname{font-size:38px;font-weight:800;letter-spacing:-.5px}
+.bsub{font-size:21px;color:#9fb6d3;margin-top:4px;font-weight:500}
+#wxpill{font-size:26px;font-weight:700;padding:12px 26px;border-radius:40px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);margin-right:36px}
+#date{font-size:24px;color:#9fb6d3;text-align:right;font-weight:500;margin-right:30px;line-height:1.3}
+#clock{font-size:72px;font-weight:300;letter-spacing:-2px;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+
+/* Folien */
+.slide{position:absolute;left:110px;right:110px;top:170px;height:790px;opacity:0;
+  -webkit-transform:translateY(24px);transform:translateY(24px);
+  -webkit-transition:opacity .9s ease,-webkit-transform .9s ease;transition:opacity .9s ease,transform .9s ease}
+.slide.on{opacity:1;-webkit-transform:none;transform:none}
+.slide>.row{height:100%}
+.grow{-webkit-box-flex:1;-webkit-flex:1;flex:1}
+.kicker{display:inline-block;color:#5ec8e5;font-size:24px;font-weight:800;text-transform:uppercase;letter-spacing:5px;margin-bottom:26px}
+.kicker:before{content:"";display:inline-block;width:46px;height:4px;border-radius:2px;background:#5ec8e5;vertical-align:middle;margin:-4px 18px 0 0}
+h1{font-size:92px;line-height:1.04;font-weight:800;letter-spacing:-2.5px;margin-bottom:30px}
+h1 em,h2 em{font-style:normal;color:#f0b54a}
+h2{font-size:54px;line-height:1.15;font-weight:700;letter-spacing:-1px;margin-bottom:26px;color:#e8f0fa}
+.lead{font-size:34px;line-height:1.45;color:#a9bfdb;max-width:1000px;font-weight:500}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:28px}
+
+/* Willkommen */
+.hello{font-size:150px;line-height:1;font-weight:800;letter-spacing:-5px;margin-bottom:28px}
+.wxcard{width:600px;padding:44px 48px;margin-left:80px}
+.wxnow{font-size:120px;font-weight:300;letter-spacing:-4px;line-height:1}
+.wxnow span{font-size:96px;margin-right:24px}
+.wxplace{font-size:26px;color:#9fb6d3;margin:14px 0 30px;font-weight:500}
+.wxdays{border-top:1px solid rgba(255,255,255,.12);padding-top:26px}
+.wxday{-webkit-box-flex:1;-webkit-flex:1;flex:1;text-align:center;font-size:22px;color:#9fb6d3;font-weight:700}
+.wxday b{display:block;font-size:44px;margin:8px 0;color:#fff}
+.wxday i{font-style:normal;color:#fff}
+
+/* Kacheln */
+.tiles{margin-top:44px;overflow:hidden;width:1730px}
+.tile{float:left;width:548px;height:178px;margin:0 23px 23px 0;padding:30px 30px}
+.tile .ic{width:76px;height:76px;border-radius:22px;background:rgba(94,200,229,.14);font-size:40px;line-height:76px;text-align:center;margin-right:24px;-webkit-flex-shrink:0;flex-shrink:0}
+.tile .t{font-size:30px;font-weight:800;letter-spacing:-.3px;line-height:1.15}
+.tile .d{font-size:23px;color:#9fb6d3;margin-top:8px;line-height:1.3;font-weight:500}
+
+/* QR */
+.qrcard{background:#fff;border-radius:36px;padding:40px;text-align:center;color:#071a33;margin-left:90px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+.qrcard img{width:400px;height:400px;display:block}
+.qrcard .cap{font-size:30px;font-weight:800;margin-top:22px}
+.qrcard .hint{font-size:21px;color:#5a6b80;margin-top:4px;font-weight:500}
+.bigic{font-size:84px;margin-bottom:20px;line-height:1}
+
+/* Bewertungen */
+.score{font-size:250px;font-weight:800;letter-spacing:-10px;line-height:.9;color:#f0b54a}
+.stars{font-size:62px;color:#f0b54a;letter-spacing:8px;margin:18px 0 10px}
+.scoresub{font-size:30px;color:#a9bfdb;font-weight:500}
+.quotes{width:900px;margin-left:80px}
+.quote{padding:40px 130px 40px 46px;margin-bottom:28px;position:relative}
+.quote p{font-size:33px;line-height:1.45;font-weight:500}
+.quote b{display:block;margin-top:18px;font-size:24px;color:#5ec8e5}
+.quote:before{content:"\201C";position:absolute;right:34px;top:-10px;font-size:160px;color:rgba(240,181,74,.25);font-family:Georgia,serif;line-height:1}
+.minqr{background:#fff;border-radius:22px;padding:16px;margin-top:40px;display:inline-block}
+.minqr img{width:170px;height:170px;display:block}
+
+/* Team */
+.team{margin-top:50px;-webkit-align-items:stretch;align-items:stretch}
+.member{width:390px;margin-right:40px;padding:40px 20px 36px;text-align:center}
+.photo{width:210px;height:210px;border-radius:50%;margin:0 auto 26px;overflow:hidden;border:5px solid rgba(94,200,229,.6);
+  background:linear-gradient(135deg,#1d4f86,#0d2f59);font-size:72px;font-weight:800;line-height:200px;color:#5ec8e5}
+.photo img{width:100%;height:100%;display:block;object-fit:cover}
+.member .n{font-size:32px;font-weight:800}
+.member .r{font-size:23px;color:#9fb6d3;margin-top:8px;font-weight:500}
+
+/* Kontakt */
+.locs{margin-top:50px}
+.loc{width:820px;margin-right:40px;padding:44px 48px}
+.loc .pin{font-size:56px;margin-right:30px}
+.loc .n{font-size:40px;font-weight:800;letter-spacing:-.5px}
+.loc .a{font-size:28px;color:#a9bfdb;margin-top:10px;font-weight:500}
+.loc .p{font-size:32px;color:#f0b54a;margin-top:12px;font-weight:700}
+
+/* Text / Monatstipp */
+.halo{width:400px;height:400px;border-radius:50%;margin-right:100px;-webkit-flex-shrink:0;flex-shrink:0;text-align:center;line-height:400px;font-size:190px;
+  background:radial-gradient(circle,rgba(94,200,229,.25),rgba(94,200,229,.04) 70%);border:2px solid rgba(94,200,229,.25)}
+.halo.gold{background:radial-gradient(circle,rgba(240,181,74,.28),rgba(240,181,74,.04) 70%);border-color:rgba(240,181,74,.3)}
+
+/* Fußzeile */
+#dots{position:absolute;right:110px;top:978px}
+#dots i{display:inline-block;width:12px;height:12px;border-radius:6px;background:rgba(255,255,255,.2);margin-left:10px;-webkit-transition:all .5s;transition:all .5s}
+#dots i.on{width:40px;background:#5ec8e5}
+#foot{position:absolute;left:0;right:0;bottom:0;height:78px;background:rgba(3,12,26,.75);border-top:1px solid rgba(255,255,255,.07)}
+#badge{position:absolute;left:0;top:0;bottom:0;padding:0 34px 0 110px;font-size:26px;font-weight:800;line-height:78px;color:#f0b54a;background:#05142a;z-index:2;white-space:nowrap}
+#badge span{color:#9fb6d3;font-weight:500}
+#tickwrap{position:absolute;left:0;right:0;top:0;bottom:0;overflow:hidden}
+#ticker{position:absolute;top:0;left:0;white-space:nowrap;font-size:27px;line-height:78px;font-weight:500;color:#dbe6f3}
+#ticker span{margin-right:90px}
+#ticker span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:5px;background:#5ec8e5;margin:0 22px 3px 0;vertical-align:middle}
+@-webkit-keyframes tick{from{-webkit-transform:translate3d(0,0,0)}to{-webkit-transform:translate3d(-50%,0,0)}}
+@keyframes tick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
 </style>
 <script src="qrcode.js"></script>
 </head>
 <body>
-<header>
-  <div class="brand">VÖLKER <span>FINANCE</span></div>
-  <div><span id="wx"></span><span id="date"></span><span id="clock"></span></div>
-</header>
-<div id="slides"></div>
-<div id="progress"></div>
-<footer><div id="ticker"></div></footer>
+<div id="app">
+  <div class="ring" style="width:900px;height:900px;right:-300px;top:-380px"></div>
+  <div class="ring" style="width:1300px;height:1300px;right:-500px;top:-580px"></div>
+
+  <div id="head" class="row">
+    <div class="row">
+      <img id="logo" src="img/logo.png" alt="" style="display:none" onload="this.style.display='block';document.getElementById('mono').style.display='none'">
+      <div id="mono">VF</div>
+      <div><div class="bname">Völker Finance</div><div class="bsub" id="bsub"></div></div>
+    </div>
+    <div class="row"><div id="wxpill" style="display:none"></div><div id="date"></div><div id="clock"></div></div>
+  </div>
+
+  <div id="slides"></div>
+  <div id="dots"></div>
+  <div id="foot"><div id="badge" style="display:none"></div><div id="tickwrap"><div id="ticker"></div></div></div>
+</div>
 
 <script>
-var SHEET_ID = "1MwlGhRCgo_AQx1bWVngPDunw4bSl6I-zu4LTOYFAt2Q";
-var SLIDE_SECONDS = 14;
-var WEATHER = { lat: 50.59, lon: 12.70, name: "Aue-Bad Schlema" };
+var SHEET_ID = "1ujB6lyodHk_QGSVD_FIDq0dEKldfRSudI46dbp-AtzY";
 
-/* Fallback, falls die Tabelle (noch) nicht erreichbar ist und nichts zwischengespeichert ist */
-var DATA = {
-  slides: [{ typ: "willkommen", kicker: "Herzlich willkommen", titel: "Schön, dass Sie *da sind.*",
-             text: "Nehmen Sie gern Platz – wir sind gleich für Sie da." }],
-  tipps: [], ticker: ["Willkommen bei Völker Finance – schön, dass Sie da sind!"]
+/* Standardinhalte = Stand der Tabelle beim Einrichten. Greifen nur, wenn die Tabelle nicht erreichbar ist. */
+var DEFAULTS = {
+  cfg: { "Wetter-Ort": "Oelsnitz/Erzgeb.", "Breitengrad": "50.7236", "Längengrad": "12.7271", "Sekunden pro Folie": "15",
+         "Untertitel Kopfzeile": "Allianz Generalvertretung · Oelsnitz & Aue" },
+  slides: [
+    { typ: "willkommen", kicker: "Herzlich willkommen", titel: "Schön, dass Sie *da sind.*", text: "Nehmen Sie gern Platz – wir sind gleich für Sie da." },
+    { typ: "liste", kicker: "Für Unternehmen", titel: "Gemeinsam *sicher voraus*", text: "Vorsorge und Vertrauen für Ihr Unternehmen.",
+      punkte: "🏥 Betriebliche Krankenversicherung: Der Mitarbeiter-Benefit mit Wirkung; 🏦 Betriebliche Altersvorsorge: Fachkräfte binden, Steuern sparen; 👔 D&O-Versicherung: Schutz für Geschäftsführer & Manager; 🚚 Kfz-Flotte: Alle Firmenfahrzeuge in einem Vertrag; ⚙ Maschinenversicherung: Wenn die Produktion stillsteht; 📈 Kreditversicherung: Schutz vor Forderungsausfällen" },
+    { typ: "bewertungen", kicker: "Das sagen unsere Kunden", titel: "4,9", text: "82", cap: "Bewerten Sie uns auf Google",
+      punkte: "Joachim: Hier wird man gut beraten und es gibt auch Beratung vor Ort, zuhause.; Susan: Immer erreichbar und immer für Ihre Kunden da. Ich bin froh, diese Agentur an meiner Seite zu haben.; Dajana: Sehr freundlich und sehr hilfsbereit. Ich bin zu 100% zufrieden.; Doreen: Schnelle persönliche Beratung. Top." },
+    { typ: "monatstipp", kicker: "Tipp des Monats" },
+    { typ: "liste", kicker: "Für Sie & Ihre Familie", titel: "Wussten Sie, dass wir *auch* …",
+      punkte: "🩺 Private Krankenversicherung: Erstklassig versorgt; 🌅 Private Rentenversicherung: Rente planen statt hoffen; 🛡 Berufsunfähigkeit: Ihre Arbeitskraft absichern; 🏡 Bausparen mit Wüstenrot: Vom Traum zum Eigenheim; 💶 Plan12: Monatliche Ausschüttung aus einem gemanagten Investment; 👨‍👩‍👧 Kinder & Enkel: Früh vorsorgen lohnt sich" },
+    { typ: "team", kicker: "Ihr Team", titel: "Persönlich für Sie da – in *Oelsnitz* & *Aue*",
+      punkte: "Thomas Völker: Gesellschafter-Geschäftsführer; Pascal Völker: Gesellschafter-Geschäftsführer; Michaela Völker: Vertriebsassistentin; Doris Weißflog: Vertriebsassistentin" },
+    { typ: "qr", kicker: "Direkter Draht", titel: "Schreiben Sie uns *per WhatsApp*", text: "Fragen, Schadenmeldung oder Termin – Code scannen und Chat starten.",
+      url: "https://wa.me/4915124676767", cap: "0151 24676767", icon: "💬" },
+    { typ: "text", kicker: "Empfehlen lohnt sich", titel: "Sie sind zufrieden? *Sagen Sie es weiter.*",
+      text: "Die schönste Anerkennung für unsere Arbeit ist Ihre Empfehlung an Freunde, Familie und Geschäftspartner.", icon: "🤝" },
+    { typ: "kontakt", kicker: "So erreichen Sie uns", titel: "Zwei Standorte. *Ein Team.*", text: "Beratung auch online oder bei Ihnen vor Ort.",
+      punkte: "Oelsnitz/Erzgebirge: Karl-Liebknecht-Straße 1a · Tel. 037298 183143; Aue: Wettinerstraße 32 · Tel. 03771 51818" },
+    { typ: "qr", kicker: "Folgen Sie uns", titel: "Neuigkeiten & Tipps auf *Instagram*", text: "Aktuelles aus der Agentur, Vorsorge-Tipps und Einblicke hinter die Kulissen.",
+      url: "https://www.instagram.com/voelker.finance", cap: "@voelker.finance", icon: "📱" }
+  ],
+  tipps: [
+    { monat: 10, icon: "🚗", titel: "Kfz-Check bis *30. November*", text: "Der 30.11. ist der wichtigste Wechselstichtag für Kfz-Verträge. Jetzt Tarif prüfen lassen!" },
+    { monat: 11, icon: "🚗", titel: "Letzte Chance: *Kfz-Stichtag 30.11.*", text: "Lassen Sie Ihren Kfz-Tarif noch diesen Monat prüfen – wir vergleichen in wenigen Minuten." },
+    { monat: 12, icon: "💶", titel: "Vor Jahresende: *Steuern & Vorsorge*", text: "Betriebliche Altersvorsorge und Basisrente können steuerlich interessant sein. Sprechen Sie uns an." }
+  ],
+  ticker: ["Willkommen bei der Allianz Generalvertretung Völker Finance – schön, dass Sie da sind!",
+           "Gemeinsam sicher voraus – Vorsorge und Vertrauen für Ihr Unternehmen",
+           "WhatsApp: 0151 24676767 – schreiben Sie uns jederzeit",
+           "Beratung auch online oder bei Ihnen zu Hause",
+           "Folgen Sie uns auf Instagram & Facebook: @voelker.finance"]
 };
+var DATA = DEFAULTS;
 
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 function hl(s) { return esc(s).replace(/\*([^*]+)\*/g, "<em>$1</em>"); }
-function points(s) {
-  var out = [], parts = String(s || "").split(";");
-  for (var i = 0; i < parts.length; i++) {
-    var p = parts[i].replace(/^\s+|\s+$/g, ""); if (!p) continue;
-    var k = p.indexOf(":");
-    out.push(k > 0 ? [p.slice(0, k), p.slice(k + 1).replace(/^\s+/, "")] : [p, ""]);
-  }
-  return out;
-}
+function trim(s) { return String(s == null ? "" : s).replace(/^\s+|\s+$/g, ""); }
+function cfg(k, d) { var v = DATA.cfg && DATA.cfg[k]; return v === undefined || v === "" ? d : v; }
 function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
 
-/* ---------- Google-Tabelle per JSONP (gviz) – funktioniert ohne CORS ---------- */
+/* "🏥 Titel: Beschreibung; ..." → [{ic, t, d}] – ein führendes Emoji wird zum Symbol */
+function points(s) {
+  var out = [], parts = String(s || "").split(";");
+  for (var i = 0; i < parts.length; i++) {
+    var p = trim(parts[i]), ic = "";
+    if (!p) continue;
+    var m = p.match(/^([^A-Za-zÄÖÜäöüß0-9\s]+)\s+(.*)$/);
+    if (m) { ic = m[1]; p = m[2]; }
+    var k = p.indexOf(":");
+    out.push({ ic: ic, t: k > 0 ? trim(p.slice(0, k)) : p, d: k > 0 ? trim(p.slice(k + 1)) : "" });
+  }
+  return out;
+}
+
+/* ---------- Google-Tabelle per JSONP (gviz) ---------- */
 function sheet(name, cb) {
-  var fn = "cb_" + name + "_" + new Date().getTime();
-  var s = document.createElement("script");
-  var done = false;
+  var fn = "cb" + Math.floor(Math.random() * 1e9), s = document.createElement("script"), done = false;
+  var timer = setTimeout(function () { if (!done) { done = true; cb(null); } }, 20000);
   window[fn] = function (resp) {
-    done = true; delete window[fn]; s.parentNode.removeChild(s);
+    if (done) return; done = true; clearTimeout(timer);
+    try { delete window[fn]; } catch (e) { window[fn] = undefined; }
+    if (s.parentNode) s.parentNode.removeChild(s);
     if (!resp || resp.status === "error" || !resp.table) return cb(null);
     var cols = resp.table.cols, rows = [], i, j;
     for (i = 0; i < resp.table.rows.length; i++) {
       var r = resp.table.rows[i].c, o = {};
-      for (j = 0; j < cols.length; j++) {
-        var c = r[j]; o[cols[j].label] = c ? (c.v != null ? c.v : (c.f || "")) : "";
-      }
+      for (j = 0; j < cols.length; j++) { var c = r[j]; o[cols[j].label] = c ? (c.v != null ? c.v : (c.f || "")) : ""; }
       rows.push(o);
     }
     cb(rows);
   };
-  s.onerror = function () { if (!done) { delete window[fn]; cb(null); } };
+  s.onerror = function () { if (!done) { done = true; clearTimeout(timer); cb(null); } };
   s.src = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=responseHandler:" + fn +
           "&headers=1&sheet=" + encodeURIComponent(name) + "&_=" + new Date().getTime();
   document.body.appendChild(s);
 }
-
 function fetchAll(cb) {
-  var res = {}, left = 3;
+  var res = {}, left = 4;
   function fin() {
     if (--left) return;
     if (!res.f) return cb(false);
-    var d = { slides: [], tipps: [], ticker: [] }, i, r;
+    var d = { cfg: {}, slides: [], tipps: [], ticker: [] }, i, r;
     for (i = 0; i < res.f.length; i++) {
       r = res.f[i];
-      if (String(r["Aktiv"]).toLowerCase() !== "ja") continue;
-      d.slides.push({ typ: String(r["Typ"] || "text").toLowerCase(), kicker: r["Überschrift klein"], titel: r["Titel"],
-        text: r["Text"], url: r["QR-Link"], cap: r["QR-Beschriftung"], icon: r["Symbol"], punkte: r["Punkte"] });
+      if (trim(r["Aktiv"]).toLowerCase() !== "ja") continue;
+      d.slides.push({ typ: trim(r["Typ"] || "text").toLowerCase(), kicker: r["Überschrift klein"], titel: r["Titel"], text: r["Text"],
+                      url: r["QR-Link"], cap: r["QR-Beschriftung"], icon: r["Symbol"], punkte: r["Punkte"] });
     }
     for (i = 0; res.m && i < res.m.length; i++) {
-      r = res.m[i];
-      d.tipps.push({ monat: parseInt(r["Monat"], 10), icon: r["Symbol"], titel: r["Titel"], text: r["Text"] });
+      r = res.m[i]; d.tipps.push({ monat: parseInt(r["Monat"], 10), icon: r["Symbol"], titel: r["Titel"], text: r["Text"] });
     }
     for (i = 0; res.l && i < res.l.length; i++) {
-      r = res.l[i];
-      if (String(r["Aktiv"]).toLowerCase() === "ja" && r["Text"]) d.ticker.push(r["Text"]);
+      r = res.l[i]; if (trim(r["Aktiv"]).toLowerCase() === "ja" && r["Text"]) d.ticker.push(r["Text"]);
     }
+    for (i = 0; res.e && i < res.e.length; i++) { r = res.e[i]; if (r["Einstellung"]) d.cfg[trim(r["Einstellung"])] = trim(r["Wert"]); }
     if (!d.slides.length) return cb(false);
-    DATA = d; store("wz_data", d); cb(true);
+    DATA = d; store("wz2_data", d); cb(true);
   }
   sheet("Folien", function (x) { res.f = x; fin(); });
   sheet("Monatstipps", function (x) { res.m = x; fin(); });
   sheet("Laufband", function (x) { res.l = x; fin(); });
+  sheet("Einstellungen", function (x) { res.e = x; fin(); });
 }
 
-/* ---------- Folien bauen ---------- */
+/* ---------- Bausteine ---------- */
+var MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+var TAGE = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+var KTAGE = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 function qrImg(data) {
-  try { var q = qrcode(0, "M"); q.addData(unescape(encodeURIComponent(data))); q.make(); return q.createImgTag(8, 0); }
+  try { var q = qrcode(0, "M"); q.addData(unescape(encodeURIComponent(data))); q.make(); return q.createImgTag(10, 0); }
   catch (e) { return ""; }
 }
+function kick(s) { return s ? '<div class="kicker">' + esc(s) + '</div>' : ""; }
+function greeting() { var h = new Date().getHours(); return h < 11 ? "Guten Morgen." : (h < 18 ? "Guten Tag." : "Guten Abend."); }
+function slug(name) {
+  return String(name).split(" ")[0].toLowerCase().replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss").replace(/[^a-z]/g, "");
+}
+function initials(name) { var w = String(name).split(" "), a = ""; for (var i = 0; i < w.length && a.length < 2; i++) if (w[i]) a += w[i].charAt(0); return a; }
+var quoteTurn = 0;
+
 function html(s) {
   var h = "", i, p;
   if (s.typ === "monatstipp") {
     var m = new Date().getMonth() + 1, t = null;
     for (i = 0; i < DATA.tipps.length; i++) if (DATA.tipps[i].monat === m) t = DATA.tipps[i];
     if (!t || !t.titel) return null;
-    s = { typ: "text", kicker: s.kicker || "Tipp des Monats", titel: t.titel, text: t.text, icon: t.icon };
+    return '<div class="row"><div class="halo gold">' + esc(t.icon) + '</div><div class="grow">' +
+           kick((s.kicker || "Tipp des Monats") + " · " + MONATE[m - 1]) + '<h1>' + hl(t.titel) + '</h1><p class="lead">' + esc(t.text) + '</p></div></div>';
   }
-  var head = '<div class="kicker">' + esc(s.kicker) + '</div><h1>' + hl(s.titel) + '</h1>';
   if (s.typ === "willkommen") {
-    h = '<div class="text">' + head + '<p class="lead">' + esc(s.text) + '</p></div><div class="side wxbig" id="wxbig"></div>';
-  } else if (s.typ === "qr") {
-    h = '<div class="text">' + head + '<p class="lead">' + esc(s.text) + '</p></div>' +
-        '<div class="side qrbox">' + qrImg(s.url || "") + '<div class="cap">' + esc(s.cap) + '</div></div>';
-  } else if (s.typ === "liste") {
-    p = points(s.punkte); h = '<div class="text">' + head + '<ul class="list">';
-    for (i = 0; i < p.length; i++) h += '<li>' + esc(p[i][0]) + (p[i][1] ? '<small>' + esc(p[i][1]) + '</small>' : '') + '</li>';
-    h += '</ul></div>';
-  } else if (s.typ === "team") {
-    p = points(s.punkte); h = '<div class="text">' + head + '<div class="team">';
-    for (i = 0; i < p.length; i++) {
-      var ini = p[i][0].split(" "), a = "";
-      for (var k = 0; k < ini.length && a.length < 2; k++) if (ini[k]) a += ini[k].charAt(0);
-      h += '<div class="p"><div class="avatar">' + esc(a) + '</div><div class="n">' + esc(p[i][0]) + '</div><div class="r">' + esc(p[i][1]) + '</div></div>';
+    return '<div class="row"><div class="grow">' + kick(s.kicker) + '<div class="hello">' + greeting() + '</div><h2>' + hl(s.titel) + '</h2>' +
+           '<p class="lead">' + esc(s.text) + '</p></div><div class="card wxcard" data-wx="1"></div></div>';
+  }
+  if (s.typ === "liste") {
+    p = points(s.punkte);
+    h = kick(s.kicker) + '<h1>' + hl(s.titel) + '</h1>' + (s.text ? '<p class="lead">' + esc(s.text) + '</p>' : "") + '<div class="tiles">';
+    for (i = 0; i < p.length && i < 6; i++)
+      h += '<div class="card tile row"><div class="ic">' + esc(p[i].ic || "✓") + '</div><div><div class="t">' + esc(p[i].t) + '</div>' +
+           (p[i].d ? '<div class="d">' + esc(p[i].d) + '</div>' : "") + '</div></div>';
+    return '<div style="padding-top:20px">' + h + '</div></div>';
+  }
+  if (s.typ === "qr") {
+    return '<div class="row"><div class="grow">' + (s.icon ? '<div class="bigic">' + esc(s.icon) + '</div>' : "") + kick(s.kicker) +
+           '<h1>' + hl(s.titel) + '</h1><p class="lead">' + esc(s.text) + '</p></div>' +
+           '<div class="qrcard">' + qrImg(s.url || "") + '<div class="cap">' + esc(s.cap) + '</div><div class="hint">Mit der Handykamera scannen</div></div></div>';
+  }
+  if (s.typ === "bewertungen") {
+    p = points(s.punkte);
+    h = '<div class="row"><div class="grow">' + kick(s.kicker) + '<div class="score">' + esc(s.titel) + '</div>' +
+        '<div class="stars">★★★★★</div><div class="scoresub">aus ' + esc(s.text) + ' Google-Bewertungen</div>' +
+        (s.url ? '<div class="row" style="margin-top:40px"><div class="minqr" style="margin:0 28px 0 0">' + qrImg(s.url) + '</div><div class="scoresub">' + esc(s.cap) + '</div></div>' : "") +
+        '</div><div class="quotes">';
+    for (i = 0; i < 2 && p.length; i++) {
+      var q = p[(quoteTurn + i) % p.length];
+      h += '<div class="card quote"><p>„' + esc(q.d) + '“</p><b>' + esc(q.t) + ' · Google-Bewertung</b></div>';
     }
-    h += '</div></div>';
-  } else {
-    h = (s.icon ? '<div class="icon">' + esc(s.icon) + '</div>' : '') + '<div class="text">' + head + '<p class="lead">' + esc(s.text) + '</p></div>';
+    quoteTurn = (quoteTurn + 2) % Math.max(p.length, 1);
+    return h + '</div></div>';
   }
-  return h;
+  if (s.typ === "team") {
+    p = points(s.punkte);
+    h = '<div style="padding-top:30px">' + kick(s.kicker) + '<h1>' + hl(s.titel) + '</h1><div class="row team">';
+    for (i = 0; i < p.length && i < 4; i++)
+      h += '<div class="card member"><div class="photo">' + esc(initials(p[i].t)) +
+           '</div><div class="n">' + esc(p[i].t) + '</div><div class="r">' + esc(p[i].d) + '</div></div>';
+    return h + '</div></div>';
+  }
+  if (s.typ === "kontakt") {
+    p = points(s.punkte);
+    h = '<div style="padding-top:40px">' + kick(s.kicker) + '<h1>' + hl(s.titel) + '</h1><p class="lead">' + esc(s.text) + '</p><div class="row locs">';
+    for (i = 0; i < p.length && i < 2; i++) {
+      var parts = p[i].d.split("·");
+      h += '<div class="card loc row"><div class="pin">📍</div><div><div class="n">' + esc(p[i].t) + '</div><div class="a">' + esc(trim(parts[0])) + '</div>' +
+           (parts[1] ? '<div class="p">' + esc(trim(parts[1])) + '</div>' : "") + '</div></div>';
+    }
+    return h + '</div></div>';
+  }
+  return '<div class="row">' + (s.icon ? '<div class="halo">' + esc(s.icon) + '</div>' : "") + '<div class="grow">' + kick(s.kicker) +
+         '<h1>' + hl(s.titel) + '</h1><p class="lead">' + esc(s.text) + '</p></div></div>';
 }
 
-var els = [], idx = -1, dirty = true;
-function build() {
-  var box = $("slides"); box.innerHTML = ""; els = [];
-  for (var i = 0; i < DATA.slides.length; i++) {
-    var h = html(DATA.slides[i]); if (!h) continue;
-    var d = document.createElement("div"); d.className = "slide"; d.innerHTML = h;
-    box.appendChild(d); els.push(d);
-  }
-  buildTicker(); paintWeather(); dirty = false;
+/* Teamfotos: img/<vorname>.jpg, sonst bleiben die Initialen */
+function photos(el, s) {
+  if (s.typ !== "team") return;
+  var p = points(s.punkte), boxes = el.getElementsByClassName("photo");
+  for (var i = 0; i < boxes.length; i++) (function (box, name) {
+    var img = new Image();
+    img.onload = function () { box.innerHTML = ""; box.appendChild(img); };
+    img.src = "img/" + slug(name) + ".jpg";
+  })(boxes[i], p[i].t);
 }
+
+/* ---------- Ablauf ---------- */
+var slides = [], idx = -1, dirty = true, cur = null;
+function rebuild() { slides = []; for (var i = 0; i < DATA.slides.length; i++) slides.push(DATA.slides[i]); dirty = false; paintStatic(); }
 function next() {
-  if (dirty) { build(); idx = -1; }
-  if (!els.length) return;
-  for (var i = 0; i < els.length; i++) els[i].className = "slide";
-  idx = (idx + 1) % els.length; els[idx].className = "slide on";
-  var p = $("progress");
-  p.style.webkitTransition = p.style.transition = "none"; p.style.width = "0";
-  setTimeout(function () {
-    p.style.webkitTransition = p.style.transition = "width " + (SLIDE_SECONDS - 0.2) + "s linear"; p.style.width = "100%";
-  }, 50);
+  if (dirty) { rebuild(); if (!FREEZE) idx = -1; }
+  if (!slides.length) return;
+  var tries = 0, h = null, s;
+  do { idx = (idx + 1) % slides.length; s = slides[idx]; h = html(s); tries++; } while (!h && tries <= slides.length);
+  if (!h) return;
+  var el = document.createElement("div"); el.className = "slide"; el.innerHTML = h;
+  $("slides").appendChild(el); photos(el, s); paintWeather();
+  var old = cur; cur = el;
+  setTimeout(function () { el.className = "slide on"; if (old) old.className = "slide"; }, 60);
+  if (old) setTimeout(function () { if (old.parentNode) old.parentNode.removeChild(old); }, 1200);
+  var d = "";
+  for (var i = 0; i < slides.length; i++) d += '<i' + (i === idx ? ' class="on"' : "") + '></i>';
+  $("dots").innerHTML = d;
+  clearTimeout(next.t);
+  if (FREEZE) return;
+  next.t = setTimeout(next, (parseFloat(cfg("Sekunden pro Folie", 15)) || 15) * 1000);
 }
 
-/* ---------- Laufband (JS statt CSS-Animation: läuft auf alten Geräten stabiler) ---------- */
-var tickX = 0, tickW = 0, tickTimer = null;
-function buildTicker() {
-  var t = $("ticker"), h = "";
-  for (var i = 0; i < DATA.ticker.length; i++) h += "<span>" + esc(DATA.ticker[i]) + "</span>";
-  t.innerHTML = h; tickW = t.offsetWidth; tickX = window.innerWidth;
-  if (!tickTimer) tickTimer = setInterval(function () {
-    tickX -= 2; if (tickX < -tickW) tickX = window.innerWidth;
-    t.style.webkitTransform = t.style.transform = "translateX(" + tickX + "px)";
-  }, 30);
+function paintStatic() {
+  $("bsub").innerHTML = esc(cfg("Untertitel Kopfzeile", "Allianz Generalvertretung · Oelsnitz & Aue"));
+  var b = null;
+  for (var i = 0; i < DATA.slides.length; i++) if (DATA.slides[i].typ === "bewertungen") b = DATA.slides[i];
+  $("badge").style.display = b ? "block" : "none";
+  if (b) $("badge").innerHTML = "★ " + esc(b.titel) + " <span>· " + esc(b.text) + " Google-Bewertungen</span>";
+  var t = $("ticker"), one = "";
+  for (i = 0; i < DATA.ticker.length; i++) one += "<span>" + esc(DATA.ticker[i]) + "</span>";
+  if (t.getAttribute("data-c") === one) return;
+  t.setAttribute("data-c", one);
+  t.innerHTML = one + one;                              // doppelt → nahtlose Endlosschleife
+  t.style.paddingLeft = (b ? $("badge").offsetWidth + 40 : 110) + "px";
+  var secs = Math.max(30, t.offsetWidth / 2 / 70);      // ca. 70 px pro Sekunde
+  t.style.webkitAnimation = t.style.animation = "none";
+  setTimeout(function () { t.style.webkitAnimation = t.style.animation = "tick " + secs + "s linear infinite"; }, 50);
 }
 
-/* ---------- Uhr & Wetter ---------- */
-var TAGE = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
-var MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+/* ---------- Uhr & Wetter (Open-Meteo, ohne API-Key) ---------- */
 function pad(n) { return n < 10 ? "0" + n : "" + n; }
 function clock() {
   var n = new Date();
   $("clock").innerHTML = pad(n.getHours()) + ":" + pad(n.getMinutes());
-  $("date").innerHTML = TAGE[n.getDay()] + ", " + n.getDate() + ". " + MONATE[n.getMonth()];
+  $("date").innerHTML = TAGE[n.getDay()] + "<br>" + n.getDate() + ". " + MONATE[n.getMonth()];
 }
-var WX = { 0: "☀", 1: "🌤", 2: "⛅", 3: "☁", 45: "🌫", 48: "🌫", 51: "🌦", 53: "🌦", 55: "🌧", 61: "🌧", 63: "🌧", 65: "🌧",
-           71: "🌨", 73: "🌨", 75: "❄", 77: "❄", 80: "🌦", 81: "🌧", 82: "⛈", 85: "🌨", 86: "🌨", 95: "⛈", 96: "⛈", 99: "⛈" };
-var wxData = null;
+var WX = { 0: "☀", 1: "🌤", 2: "⛅", 3: "☁", 45: "🌫", 48: "🌫", 51: "🌦", 53: "🌦", 55: "🌧", 56: "🌧", 57: "🌧", 61: "🌧", 63: "🌧", 65: "🌧",
+           66: "🌧", 67: "🌧", 71: "🌨", 73: "🌨", 75: "❄", 77: "❄", 80: "🌦", 81: "🌧", 82: "⛈", 85: "🌨", 86: "🌨", 95: "⛈", 96: "⛈", 99: "⛈" };
+var wx = null;
 function paintWeather() {
-  if (!wxData) return;
-  $("wx").innerHTML = wxData.ic + " " + wxData.t + " °C";
-  var b = $("wxbig");
-  if (b) b.innerHTML = wxData.ic + " " + wxData.t + " °C<small>" + WEATHER.name + " · heute " + wxData.min + "° / " + wxData.max + "°</small>";
+  if (!wx) return;
+  $("wxpill").style.display = "block";
+  $("wxpill").innerHTML = wx.ic + "&nbsp; " + wx.t + "°";
+  var cards = document.querySelectorAll("[data-wx]");
+  for (var c = 0; c < cards.length; c++) {
+    var h = '<div class="wxnow"><span>' + wx.ic + '</span>' + wx.t + '°</div><div class="wxplace">' + esc(cfg("Wetter-Ort", "")) +
+            ' · heute ' + wx.days[0].min + '° bis ' + wx.days[0].max + '°</div><div class="row wxdays">';
+    for (var i = 1; i < wx.days.length; i++)
+      h += '<div class="wxday">' + wx.days[i].tag + '<b>' + wx.days[i].ic + '</b><i>' + wx.days[i].max + '°</i> / ' + wx.days[i].min + '°</div>';
+    cards[c].innerHTML = h + '</div>';
+  }
 }
 function weather() {
   var x = new XMLHttpRequest();
-  x.open("GET", "https://api.open-meteo.com/v1/forecast?latitude=" + WEATHER.lat + "&longitude=" + WEATHER.lon +
-    "&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=1");
+  x.open("GET", "https://api.open-meteo.com/v1/forecast?latitude=" + cfg("Breitengrad", "50.7236") + "&longitude=" + cfg("Längengrad", "12.7271") +
+    "&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=4");
   x.onload = function () {
     try {
-      var j = JSON.parse(x.responseText);
-      wxData = { ic: WX[j.current.weather_code] || "", t: Math.round(j.current.temperature_2m),
-                 min: Math.round(j.daily.temperature_2m_min[0]), max: Math.round(j.daily.temperature_2m_max[0]) };
+      var j = JSON.parse(x.responseText), d = j.daily, days = [];
+      for (var i = 0; i < d.time.length; i++) {
+        var p = d.time[i].split("-"), dt = new Date(+p[0], +p[1] - 1, +p[2]);
+        days.push({ tag: KTAGE[dt.getDay()], ic: WX[d.weather_code[i]] || "", max: Math.round(d.temperature_2m_max[i]), min: Math.round(d.temperature_2m_min[i]) });
+      }
+      wx = { ic: WX[j.current.weather_code] || "", t: Math.round(j.current.temperature_2m), days: days };
       paintWeather();
     } catch (e) {}
   };
   x.send();
 }
 
+/* ---------- Bühne auf Bildschirm skalieren ---------- */
+function fit() {
+  var w = window.innerWidth, h = window.innerHeight, s = Math.min(w / 1920, h / 1080), a = $("app");
+  var tf = "translate(" + Math.round((w - 1920 * s) / 2) + "px," + Math.round((h - 1080 * s) / 2) + "px) scale(" + s + ")";
+  a.style.webkitTransform = a.style.transform = tf;
+}
+
 /* ---------- Start ---------- */
-var cached = load("wz_data"); if (cached && cached.slides && cached.slides.length) DATA = cached;
+/* Vorschau: index.html#3 zeigt fest Folie 3 */
+var FREEZE = /^#\d+$/.test(location.hash);
+if (FREEZE) idx = parseInt(location.hash.slice(1), 10) - 2;
+fit(); window.onresize = fit;
+var cached = load("wz2_data"); if (cached && cached.slides && cached.slides.length) DATA = cached;
 clock(); setInterval(clock, 10000);
+next();
 weather(); setInterval(weather, 30 * 60 * 1000);
-next(); setInterval(next, SLIDE_SECONDS * 1000);
-fetchAll(function (ok) { if (ok) { dirty = true; next(); } });
+fetchAll(function (ok) { if (ok) { dirty = true; paintStatic(); weather(); } });
 setInterval(function () { fetchAll(function (ok) { if (ok) dirty = true; }); }, 5 * 60 * 1000);
-/* Neuladen um 3 Uhr nachts holt Updates der Seite selbst */
+/* Um 3 Uhr nachts komplett neu laden – holt Updates der Seite selbst */
 setInterval(function () { var n = new Date(); if (n.getHours() === 3 && n.getMinutes() < 6) location.reload(); }, 5 * 60 * 1000);
 </script>
 </body>
