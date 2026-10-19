@@ -27,7 +27,7 @@ body{font-family:"Manrope","Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#f
 
 /* Kopfzeile */
 #head{position:absolute;left:110px;right:110px;top:42px;height:96px;-webkit-justify-content:space-between;justify-content:space-between}
-#logo{height:84px;margin-right:26px}
+#logo{width:104px;height:104px;border-radius:50%;background:#fff;padding:3px;margin-right:26px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
 #mono{width:84px;height:84px;border-radius:24px;margin-right:26px;font-weight:800;font-size:36px;line-height:84px;text-align:center;letter-spacing:-1px;
   background:linear-gradient(135deg,#5ec8e5,#2b7fd0);color:#fff;box-shadow:0 10px 30px rgba(43,127,208,.35)}
 .bname{font-size:38px;font-weight:800;letter-spacing:-.5px}
@@ -97,6 +97,25 @@ h2{font-size:54px;line-height:1.15;font-weight:700;letter-spacing:-1px;margin-bo
 .member .n{font-size:32px;font-weight:800}
 .member .r{font-size:23px;color:#9fb6d3;margin-top:8px;font-weight:500}
 
+.teamphoto{width:700px;height:700px;border-radius:36px;overflow:hidden;margin-left:80px;-webkit-flex-shrink:0;flex-shrink:0;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.teamphoto img{width:100%;height:100%;display:block}
+.names{margin-top:40px}
+.names div{font-size:34px;font-weight:800;margin-bottom:22px;padding-left:28px;border-left:5px solid #5ec8e5;line-height:1.2}
+.names span{display:block;font-size:24px;color:#9fb6d3;font-weight:500;margin-top:4px}
+
+/* Öffnungszeiten */
+.hours{width:820px;padding:30px 46px;margin-left:80px}
+.hrow{padding:20px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:31px;-webkit-justify-content:space-between;justify-content:space-between}
+.hrow:last-child{border-bottom:0}
+.hrow b{font-weight:800;width:250px}
+.hrow span{color:#a9bfdb;font-weight:500;text-align:right}
+.hrow.today{margin:0 -26px;padding:20px 26px;border-radius:16px;background:rgba(94,200,229,.14);border-bottom-color:transparent}
+.hrow.today b,.hrow.today span{color:#fff}
+.status{display:inline-block;font-size:28px;font-weight:800;padding:14px 30px;border-radius:40px;margin-top:10px}
+.status.open{background:rgba(72,199,116,.16);color:#6fe09a}
+.status.closed{background:rgba(255,255,255,.08);color:#c3d2e4}
+#openpill{font-size:24px;font-weight:800;padding:12px 24px;border-radius:40px;margin-right:24px;display:none}
+
 /* Kontakt */
 .locs{margin-top:50px}
 .loc{width:820px;margin-right:40px;padding:44px 48px}
@@ -133,11 +152,11 @@ h2{font-size:54px;line-height:1.15;font-weight:700;letter-spacing:-1px;margin-bo
 
   <div id="head" class="row">
     <div class="row">
-      <img id="logo" src="img/logo.png" alt="" style="display:none" onload="this.style.display='block';document.getElementById('mono').style.display='none'">
+      <img id="logo" src="img/logo.jpg" alt="" style="display:none" onload="this.style.display='block';document.getElementById('mono').style.display='none'">
       <div id="mono">VF</div>
       <div><div class="bname">Völker Finance</div><div class="bsub" id="bsub"></div></div>
     </div>
-    <div class="row"><div id="wxpill" style="display:none"></div><div id="date"></div><div id="clock"></div></div>
+    <div class="row"><div id="openpill"></div><div id="wxpill" style="display:none"></div><div id="date"></div><div id="clock"></div></div>
   </div>
 
   <div id="slides"></div>
@@ -146,7 +165,7 @@ h2{font-size:54px;line-height:1.15;font-weight:700;letter-spacing:-1px;margin-bo
 </div>
 
 <script>
-var SHEET_ID = "1ujB6lyodHk_QGSVD_FIDq0dEKldfRSudI46dbp-AtzY";
+var SHEET_ID = "1iaaXZBbWpqgr-bRgkkTNY-H3UA5SXOZ0GYhbStEDl9k";
 
 /* Standardinhalte = Stand der Tabelle beim Einrichten. Greifen nur, wenn die Tabelle nicht erreichbar ist. */
 var DEFAULTS = {
@@ -154,6 +173,8 @@ var DEFAULTS = {
          "Untertitel Kopfzeile": "Allianz Generalvertretung · Oelsnitz & Aue" },
   slides: [
     { typ: "willkommen", kicker: "Herzlich willkommen", titel: "Schön, dass Sie *da sind.*", text: "Nehmen Sie gern Platz – wir sind gleich für Sie da." },
+    { typ: "oeffnungszeiten", kicker: "Öffnungszeiten Oelsnitz", titel: "Wir sind *für Sie da*", text: "Karl-Liebknecht-Straße 1a · Tel. 037298 183143",
+      punkte: "Montag: 9:00–12:00 · 13:30–15:00; Dienstag: 9:00–12:00 · 13:30–18:00; Mittwoch: geschlossen; Donnerstag: 9:00–12:00 · 13:30–18:00; Freitag: 9:00–12:00" },
     { typ: "liste", kicker: "Für Unternehmen", titel: "Gemeinsam *sicher voraus*", text: "Vorsorge und Vertrauen für Ihr Unternehmen.",
       punkte: "🏥 Betriebliche Krankenversicherung: Der Mitarbeiter-Benefit mit Wirkung; 🏦 Betriebliche Altersvorsorge: Fachkräfte binden, Steuern sparen; 👔 D&O-Versicherung: Schutz für Geschäftsführer & Manager; 🚚 Kfz-Flotte: Alle Firmenfahrzeuge in einem Vertrag; ⚙ Maschinenversicherung: Wenn die Produktion stillsteht; 📈 Kreditversicherung: Schutz vor Forderungsausfällen" },
     { typ: "bewertungen", kicker: "Das sagen unsere Kunden", titel: "4,9", text: "82", cap: "Bewerten Sie uns auf Google",
@@ -161,7 +182,7 @@ var DEFAULTS = {
     { typ: "monatstipp", kicker: "Tipp des Monats" },
     { typ: "liste", kicker: "Für Sie & Ihre Familie", titel: "Wussten Sie, dass wir *auch* …",
       punkte: "🩺 Private Krankenversicherung: Erstklassig versorgt; 🌅 Private Rentenversicherung: Rente planen statt hoffen; 🛡 Berufsunfähigkeit: Ihre Arbeitskraft absichern; 🏡 Bausparen mit Wüstenrot: Vom Traum zum Eigenheim; 💶 Plan12: Monatliche Ausschüttung aus einem gemanagten Investment; 👨‍👩‍👧 Kinder & Enkel: Früh vorsorgen lohnt sich" },
-    { typ: "team", kicker: "Ihr Team", titel: "Persönlich für Sie da – in *Oelsnitz* & *Aue*",
+    { typ: "team", kicker: "Ihr Team in Oelsnitz & Aue", titel: "Persönlich *für Sie da*",
       punkte: "Thomas Völker: Gesellschafter-Geschäftsführer; Pascal Völker: Gesellschafter-Geschäftsführer; Michaela Völker: Vertriebsassistentin; Doris Weißflog: Vertriebsassistentin" },
     { typ: "qr", kicker: "Direkter Draht", titel: "Schreiben Sie uns *per WhatsApp*", text: "Fragen, Schadenmeldung oder Termin – Code scannen und Chat starten.",
       url: "https://wa.me/4915124676767", cap: "0151 24676767", icon: "💬" },
@@ -312,6 +333,21 @@ function html(s) {
     quoteTurn = (quoteTurn + 2) % Math.max(p.length, 1);
     return h + '</div></div>';
   }
+  if (s.typ === "team" && teamPhoto) {
+    p = points(s.punkte);
+    h = '<div class="row"><div class="grow">' + kick(s.kicker) + '<h1>' + hl(s.titel) + '</h1><div class="names">';
+    for (i = 0; i < p.length; i++) h += '<div>' + esc(p[i].t) + '<span>' + esc(p[i].d) + '</span></div>';
+    return h + '</div></div><div class="teamphoto"><img src="img/team.jpg"></div></div>';
+  }
+  if (s.typ === "oeffnungszeiten") {
+    p = points(s.punkte);
+    var st = openState(s), today = TAGE[new Date().getDay()];
+    h = '<div class="row"><div class="grow">' + kick(s.kicker) + '<h1>' + hl(s.titel) + '</h1><p class="lead">' + esc(s.text) + '</p>' +
+        '<div class="status ' + (st.open ? 'open' : 'closed') + '">' + esc(st.label) + '</div></div><div class="card hours">';
+    for (i = 0; i < p.length; i++)
+      h += '<div class="row hrow' + (p[i].t === today ? ' today' : '') + '"><b>' + esc(p[i].t) + '</b><span>' + esc(p[i].d) + '</span></div>';
+    return h + '</div></div>';
+  }
   if (s.typ === "team") {
     p = points(s.punkte);
     h = '<div style="padding-top:30px">' + kick(s.kicker) + '<h1>' + hl(s.titel) + '</h1><div class="row team">';
@@ -332,6 +368,43 @@ function html(s) {
   }
   return '<div class="row">' + (s.icon ? '<div class="halo">' + esc(s.icon) + '</div>' : "") + '<div class="grow">' + kick(s.kicker) +
          '<h1>' + hl(s.titel) + '</h1><p class="lead">' + esc(s.text) + '</p></div></div>';
+}
+
+/* Öffnungszeiten: "9:00–12:00 · 13:30–18:00" je Tag → Status jetzt */
+function mins(t) { var m = String(t).match(/(\d{1,2})[:.](\d{2})/); return m ? +m[1] * 60 + +m[2] : null; }
+function ranges(txt) {
+  var out = [], parts = String(txt || "").split(/[·,]/);
+  for (var i = 0; i < parts.length; i++) {
+    var ab = parts[i].split(/[–-]/);
+    if (ab.length === 2 && mins(ab[0]) !== null && mins(ab[1]) !== null) out.push([mins(ab[0]), mins(ab[1])]);
+  }
+  return out;
+}
+function fmt(m) { return Math.floor(m / 60) + ":" + pad(m % 60); }
+function openState(s) {
+  var p = points(s.punkte), n = new Date(), now = n.getHours() * 60 + n.getMinutes(), today = TAGE[n.getDay()], i, r, k;
+  for (i = 0; i < p.length; i++) if (p[i].t === today) {
+    r = ranges(p[i].d);
+    for (k = 0; k < r.length; k++) {
+      if (now >= r[k][0] && now < r[k][1]) return { open: true, label: "● Jetzt geöffnet bis " + fmt(r[k][1]) + " Uhr" };
+      if (now < r[k][0]) return { open: false, label: "Heute wieder ab " + fmt(r[k][0]) + " Uhr geöffnet" };
+    }
+  }
+  for (var d = 1; d <= 7; d++) {
+    var tag = TAGE[(n.getDay() + d) % 7];
+    for (i = 0; i < p.length; i++) if (p[i].t === tag && (r = ranges(p[i].d)).length)
+      return { open: false, label: "Wieder geöffnet " + (d === 1 ? "morgen" : "am " + tag) + " ab " + fmt(r[0][0]) + " Uhr" };
+  }
+  return { open: false, label: "Derzeit geschlossen" };
+}
+function paintOpen() {
+  var s = null, el = $("openpill");
+  for (var i = 0; i < DATA.slides.length; i++) if (DATA.slides[i].typ === "oeffnungszeiten") { s = DATA.slides[i]; break; }
+  if (!s) { el.style.display = "none"; return; }
+  var st = openState(s);
+  el.style.display = "block";
+  el.className = "status " + (st.open ? "open" : "closed");
+  el.innerHTML = st.open ? "● Geöffnet" : "Geschlossen";
 }
 
 /* Teamfotos: img/<vorname>.jpg, sonst bleiben die Initialen */
@@ -390,6 +463,7 @@ function clock() {
   var n = new Date();
   $("clock").innerHTML = pad(n.getHours()) + ":" + pad(n.getMinutes());
   $("date").innerHTML = TAGE[n.getDay()] + "<br>" + n.getDate() + ". " + MONATE[n.getMonth()];
+  paintOpen();
 }
 var WX = { 0: "☀", 1: "🌤", 2: "⛅", 3: "☁", 45: "🌫", 48: "🌫", 51: "🌦", 53: "🌦", 55: "🌧", 56: "🌧", 57: "🌧", 61: "🌧", 63: "🌧", 65: "🌧",
            66: "🌧", 67: "🌧", 71: "🌨", 73: "🌨", 75: "❄", 77: "❄", 80: "🌦", 81: "🌧", 82: "⛈", 85: "🌨", 86: "🌨", 95: "⛈", 96: "⛈", 99: "⛈" };
@@ -431,6 +505,9 @@ function fit() {
   var tf = "translate(" + Math.round((w - 1920 * s) / 2) + "px," + Math.round((h - 1080 * s) / 2) + "px) scale(" + s + ")";
   a.style.webkitTransform = a.style.transform = tf;
 }
+
+var teamPhoto = true;   /* img/team.jpg vorhanden → Gruppenfoto; fehlt es, Karten mit Initialen */
+(function () { var im = new Image(); im.onerror = function () { teamPhoto = false; dirty = true; }; im.src = "img/team.jpg"; })();
 
 /* ---------- Start ---------- */
 /* Vorschau: index.html#3 zeigt fest Folie 3 */
