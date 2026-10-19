@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wartezimmer-TV</title>
+<!--
+  Wartezimmer-TV – Völker Finance
+  Inhalte kommen aus der Google-Tabelle (SHEET_ID unten), werden alle 5 Minuten neu geladen.
+  Bewusst ES5 + einfaches CSS, damit es auch auf alten Fire-TV-Sticks (Fire OS 5) läuft.
+-->
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:#0b1d33;color:#fff;
+  font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;cursor:none}
+header{position:fixed;top:0;left:0;right:0;height:9vh;padding:0 4vw;font-size:2.4vh;color:#a9bdd6;
+  display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;
+  -webkit-justify-content:space-between;justify-content:space-between}
+.brand{font-weight:700;color:#fff;font-size:3vh;letter-spacing:.05em}
+.brand span{color:#4fc3d9}
+#wx,#date{margin-right:3vw}
+#clock{font-size:3.4vh;color:#fff;font-weight:600}
+.slide{position:absolute;top:9vh;bottom:11vh;left:4vw;right:4vw;opacity:0;-webkit-transition:opacity 1s;transition:opacity 1s;
+  display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+.slide.on{opacity:1}
+.text{-webkit-flex:1;flex:1}
+.side{margin-left:5vw}
+.kicker{color:#4fc3d9;font-size:2.6vh;font-weight:700;text-transform:uppercase;letter-spacing:.15em;margin-bottom:2vh}
+h1{font-size:7.5vh;line-height:1.1;font-weight:800;margin-bottom:3vh}
+h1 em{font-style:normal;color:#f2b84b}
+.lead{font-size:3.4vh;line-height:1.4;color:#a9bdd6;max-width:62vw}
+.list{list-style:none;margin-top:2vh;overflow:hidden}
+.list li{float:left;width:48%;margin:0 2% 2vh 0;font-size:2.9vh;padding:1.8vh 2vw;background:#163560;
+  border-radius:1.5vh;border-left:.6vh solid #4fc3d9}
+.list li small{display:block;color:#a9bdd6;font-size:2.1vh;margin-top:.5vh}
+.qrbox{background:#fff;padding:2.5vh;border-radius:2vh;text-align:center;color:#0b1d33}
+.qrbox img{width:34vh;height:34vh;display:block}
+.qrbox .cap{font-size:2.4vh;font-weight:700;margin-top:1.5vh}
+.icon{font-size:20vh;line-height:1;margin-right:5vw}
+.team{margin-top:3vh;overflow:hidden}
+.team .p{float:left;width:20%;text-align:center}
+.avatar{width:15vh;height:15vh;line-height:15vh;border-radius:50%;background:#163560;margin:0 auto 1.5vh;
+  font-size:5vh;font-weight:700;color:#4fc3d9;border:.4vh solid #4fc3d9}
+.team .n{font-size:2.6vh;font-weight:700}.team .r{font-size:2vh;color:#a9bdd6}
+.wxbig{font-size:8vh;font-weight:700}.wxbig small{display:block;font-size:2.6vh;color:#a9bdd6;font-weight:400}
+#progress{position:fixed;left:0;bottom:7vh;height:.5vh;background:#4fc3d9;width:0}
+footer{position:fixed;left:0;right:0;bottom:0;height:7vh;line-height:7vh;background:#07142a;overflow:hidden;font-size:2.6vh;white-space:nowrap}
+#ticker{position:absolute;left:0;top:0;white-space:nowrap}
+#ticker span{margin-right:6vw}
+#ticker span:before{content:"\25CF";color:#4fc3d9;margin-right:1.2vw}
+</style>
+<script src="qrcode.js"></script>
+</head>
+<body>
+<header>
+  <div class="brand">VÖLKER <span>FINANCE</span></div>
+  <div><span id="wx"></span><span id="date"></span><span id="clock"></span></div>
+</header>
+<div id="slides"></div>
+<div id="progress"></div>
+<footer><div id="ticker"></div></footer>
+
+<script>
+var SHEET_ID = "1MwlGhRCgo_AQx1bWVngPDunw4bSl6I-zu4LTOYFAt2Q";
+var SLIDE_SECONDS = 14;
+var WEATHER = { lat: 50.59, lon: 12.70, name: "Aue-Bad Schlema" };
+
+/* Fallback, falls die Tabelle (noch) nicht erreichbar ist und nichts zwischengespeichert ist */
+var DATA = {
+  slides: [{ typ: "willkommen", kicker: "Herzlich willkommen", titel: "Schön, dass Sie *da sind.*",
+             text: "Nehmen Sie gern Platz – wir sind gleich für Sie da." }],
+  tipps: [], ticker: ["Willkommen bei Völker Finance – schön, dass Sie da sind!"]
+};
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function hl(s) { return esc(s).replace(/\*([^*]+)\*/g, "<em>$1</em>"); }
+function points(s) {
+  var out = [], parts = String(s || "").split(";");
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i].replace(/^\s+|\s+$/g, ""); if (!p) continue;
+    var k = p.indexOf(":");
+    out.push(k > 0 ? [p.slice(0, k), p.slice(k + 1).replace(/^\s+/, "")] : [p, ""]);
+  }
+  return out;
+}
+function store(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function load(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+
+/* ---------- Google-Tabelle per JSONP (gviz) – funktioniert ohne CORS ---------- */
+function sheet(name, cb) {
+  var fn = "cb_" + name + "_" + new Date().getTime();
+  var s = document.createElement("script");
+  var done = false;
+  window[fn] = function (resp) {
+    done = true; delete window[fn]; s.parentNode.removeChild(s);
+    if (!resp || resp.status === "error" || !resp.table) return cb(null);
+    var cols = resp.table.cols, rows = [], i, j;
+    for (i = 0; i < resp.table.rows.length; i++) {
+      var r = resp.table.rows[i].c, o = {};
+      for (j = 0; j < cols.length; j++) {
+        var c = r[j]; o[cols[j].label] = c ? (c.v != null ? c.v : (c.f || "")) : "";
+      }
+      rows.push(o);
+    }
+    cb(rows);
+  };
+  s.onerror = function () { if (!done) { delete window[fn]; cb(null); } };
+  s.src = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=responseHandler:" + fn +
+          "&headers=1&sheet=" + encodeURIComponent(name) + "&_=" + new Date().getTime();
+  document.body.appendChild(s);
+}
+
+function fetchAll(cb) {
+  var res = {}, left = 3;
+  function fin() {
+    if (--left) return;
+    if (!res.f) return cb(false);
+    var d = { slides: [], tipps: [], ticker: [] }, i, r;
+    for (i = 0; i < res.f.length; i++) {
+      r = res.f[i];
+      if (String(r["Aktiv"]).toLowerCase() !== "ja") continue;
+      d.slides.push({ typ: String(r["Typ"] || "text").toLowerCase(), kicker: r["Überschrift klein"], titel: r["Titel"],
+        text: r["Text"], url: r["QR-Link"], cap: r["QR-Beschriftung"], icon: r["Symbol"], punkte: r["Punkte"] });
+    }
+    for (i = 0; res.m && i < res.m.length; i++) {
+      r = res.m[i];
+      d.tipps.push({ monat: parseInt(r["Monat"], 10), icon: r["Symbol"], titel: r["Titel"], text: r["Text"] });
+    }
+    for (i = 0; res.l && i < res.l.length; i++) {
+      r = res.l[i];
+      if (String(r["Aktiv"]).toLowerCase() === "ja" && r["Text"]) d.ticker.push(r["Text"]);
+    }
+    if (!d.slides.length) return cb(false);
+    DATA = d; store("wz_data", d); cb(true);
+  }
+  sheet("Folien", function (x) { res.f = x; fin(); });
+  sheet("Monatstipps", function (x) { res.m = x; fin(); });
+  sheet("Laufband", function (x) { res.l = x; fin(); });
+}
+
+/* ---------- Folien bauen ---------- */
+function qrImg(data) {
+  try { var q = qrcode(0, "M"); q.addData(unescape(encodeURIComponent(data))); q.make(); return q.createImgTag(8, 0); }
+  catch (e) { return ""; }
+}
+function html(s) {
+  var h = "", i, p;
+  if (s.typ === "monatstipp") {
+    var m = new Date().getMonth() + 1, t = null;
+    for (i = 0; i < DATA.tipps.length; i++) if (DATA.tipps[i].monat === m) t = DATA.tipps[i];
+    if (!t || !t.titel) return null;
+    s = { typ: "text", kicker: s.kicker || "Tipp des Monats", titel: t.titel, text: t.text, icon: t.icon };
+  }
+  var head = '<div class="kicker">' + esc(s.kicker) + '</div><h1>' + hl(s.titel) + '</h1>';
+  if (s.typ === "willkommen") {
+    h = '<div class="text">' + head + '<p class="lead">' + esc(s.text) + '</p></div><div class="side wxbig" id="wxbig"></div>';
+  } else if (s.typ === "qr") {
+    h = '<div class="text">' + head + '<p class="lead">' + esc(s.text) + '</p></div>' +
+        '<div class="side qrbox">' + qrImg(s.url || "") + '<div class="cap">' + esc(s.cap) + '</div></div>';
+  } else if (s.typ === "liste") {
+    p = points(s.punkte); h = '<div class="text">' + head + '<ul class="list">';
+    for (i = 0; i < p.length; i++) h += '<li>' + esc(p[i][0]) + (p[i][1] ? '<small>' + esc(p[i][1]) + '</small>' : '') + '</li>';
+    h += '</ul></div>';
+  } else if (s.typ === "team") {
+    p = points(s.punkte); h = '<div class="text">' + head + '<div class="team">';
+    for (i = 0; i < p.length; i++) {
+      var ini = p[i][0].split(" "), a = "";
+      for (var k = 0; k < ini.length && a.length < 2; k++) if (ini[k]) a += ini[k].charAt(0);
+      h += '<div class="p"><div class="avatar">' + esc(a) + '</div><div class="n">' + esc(p[i][0]) + '</div><div class="r">' + esc(p[i][1]) + '</div></div>';
+    }
+    h += '</div></div>';
+  } else {
+    h = (s.icon ? '<div class="icon">' + esc(s.icon) + '</div>' : '') + '<div class="text">' + head + '<p class="lead">' + esc(s.text) + '</p></div>';
+  }
+  return h;
+}
+
+var els = [], idx = -1, dirty = true;
+function build() {
+  var box = $("slides"); box.innerHTML = ""; els = [];
+  for (var i = 0; i < DATA.slides.length; i++) {
+    var h = html(DATA.slides[i]); if (!h) continue;
+    var d = document.createElement("div"); d.className = "slide"; d.innerHTML = h;
+    box.appendChild(d); els.push(d);
+  }
+  buildTicker(); paintWeather(); dirty = false;
+}
+function next() {
+  if (dirty) { build(); idx = -1; }
+  if (!els.length) return;
+  for (var i = 0; i < els.length; i++) els[i].className = "slide";
+  idx = (idx + 1) % els.length; els[idx].className = "slide on";
+  var p = $("progress");
+  p.style.webkitTransition = p.style.transition = "none"; p.style.width = "0";
+  setTimeout(function () {
+    p.style.webkitTransition = p.style.transition = "width " + (SLIDE_SECONDS - 0.2) + "s linear"; p.style.width = "100%";
+  }, 50);
+}
+
+/* ---------- Laufband (JS statt CSS-Animation: läuft auf alten Geräten stabiler) ---------- */
+var tickX = 0, tickW = 0, tickTimer = null;
+function buildTicker() {
+  var t = $("ticker"), h = "";
+  for (var i = 0; i < DATA.ticker.length; i++) h += "<span>" + esc(DATA.ticker[i]) + "</span>";
+  t.innerHTML = h; tickW = t.offsetWidth; tickX = window.innerWidth;
+  if (!tickTimer) tickTimer = setInterval(function () {
+    tickX -= 2; if (tickX < -tickW) tickX = window.innerWidth;
+    t.style.webkitTransform = t.style.transform = "translateX(" + tickX + "px)";
+  }, 30);
+}
+
+/* ---------- Uhr & Wetter ---------- */
+var TAGE = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+var MONATE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+function pad(n) { return n < 10 ? "0" + n : "" + n; }
+function clock() {
+  var n = new Date();
+  $("clock").innerHTML = pad(n.getHours()) + ":" + pad(n.getMinutes());
+  $("date").innerHTML = TAGE[n.getDay()] + ", " + n.getDate() + ". " + MONATE[n.getMonth()];
+}
+var WX = { 0: "☀", 1: "🌤", 2: "⛅", 3: "☁", 45: "🌫", 48: "🌫", 51: "🌦", 53: "🌦", 55: "🌧", 61: "🌧", 63: "🌧", 65: "🌧",
+           71: "🌨", 73: "🌨", 75: "❄", 77: "❄", 80: "🌦", 81: "🌧", 82: "⛈", 85: "🌨", 86: "🌨", 95: "⛈", 96: "⛈", 99: "⛈" };
+var wxData = null;
+function paintWeather() {
+  if (!wxData) return;
+  $("wx").innerHTML = wxData.ic + " " + wxData.t + " °C";
+  var b = $("wxbig");
+  if (b) b.innerHTML = wxData.ic + " " + wxData.t + " °C<small>" + WEATHER.name + " · heute " + wxData.min + "° / " + wxData.max + "°</small>";
+}
+function weather() {
+  var x = new XMLHttpRequest();
+  x.open("GET", "https://api.open-meteo.com/v1/forecast?latitude=" + WEATHER.lat + "&longitude=" + WEATHER.lon +
+    "&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Europe%2FBerlin&forecast_days=1");
+  x.onload = function () {
+    try {
+      var j = JSON.parse(x.responseText);
+      wxData = { ic: WX[j.current.weather_code] || "", t: Math.round(j.current.temperature_2m),
+                 min: Math.round(j.daily.temperature_2m_min[0]), max: Math.round(j.daily.temperature_2m_max[0]) };
+      paintWeather();
+    } catch (e) {}
+  };
+  x.send();
+}
+
+/* ---------- Start ---------- */
+var cached = load("wz_data"); if (cached && cached.slides && cached.slides.length) DATA = cached;
+clock(); setInterval(clock, 10000);
+weather(); setInterval(weather, 30 * 60 * 1000);
+next(); setInterval(next, SLIDE_SECONDS * 1000);
+fetchAll(function (ok) { if (ok) { dirty = true; next(); } });
+setInterval(function () { fetchAll(function (ok) { if (ok) dirty = true; }); }, 5 * 60 * 1000);
+/* Neuladen um 3 Uhr nachts holt Updates der Seite selbst */
+setInterval(function () { var n = new Date(); if (n.getHours() === 3 && n.getMinutes() < 6) location.reload(); }, 5 * 60 * 1000);
+</script>
+</body>
+</html>
